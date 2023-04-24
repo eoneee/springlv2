@@ -5,6 +5,7 @@ import com.example.springlv2.dto.CrudResponseDto;
 import com.example.springlv2.dto.MsgResponseDto;
 import com.example.springlv2.entity.Crud;
 import com.example.springlv2.entity.User;
+import com.example.springlv2.entity.UserRoleEnum;
 import com.example.springlv2.jwt.JwtUtil;
 import com.example.springlv2.repository.CrudRepository;
 import com.example.springlv2.repository.UserRepository;
@@ -31,26 +32,13 @@ public class CrudService {
     //글 생성하기
     @Transactional
     public CrudResponseDto createCrud(CrudRequestDto requestDto, HttpServletRequest request) {
-
-        String token = jwtUtil.resolveToken(request);
-        Claims claims;
-
-        if (token != null) {
-            if (jwtUtil.validateToken(token)) {
-                claims = jwtUtil.getUserInfoFromToken(token);
-            } else {
-                throw new IllegalArgumentException("Token Error");
-            }
-            User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
-                    () -> new IllegalArgumentException("사용자가 존재하지 않습니다.")
-            );
+            User user = checkJwtToken(request);
             //요청받은 dto로 db에 저장할 객체 Crud crud 만들기
-            crudRepository.saveAndFlush(requestDto);
+            Crud crud = new Crud(requestDto);
+            crud.setUsername(user.getUsername());
+            crudRepository.saveAndFlush(crud);
             //브라우저에서 받아온 데이터를 저장하기 위해서 crud객체로 변환
             return new CrudResponseDto(crud);
-        } else {
-            return null;
-        }
     }
 
     //메인 페이지
@@ -70,12 +58,6 @@ public class CrudService {
         //조회하기 위해 받아온 crud의 id를 사용해서 해당 crud인스턴스가 테이블에 존재 하는지 확인하고 가져오기
         //Crud crud = table.get(id);->repository한테서 id를 가져오면 됨
         Crud crud = checkCrud(id);
-//        위에서 예외 처리 해줌
-//        if(crud != null){
-//            return new CrudResponseDto(crud);
-//        }else{
-//            return new CrudResponseDto();
-//        }
         return new CrudResponseDto(crud);
     }
 
@@ -86,12 +68,9 @@ public class CrudService {
             Crud crud = crudRepository.findById(id).orElseThrow(
                     ()->new IllegalArgumentException("게시글이 존재하지 않습니다.")
             );
-
-            crud.update(requestDto);
-            return new CrudResponseDto(crud);
-        } else {
-            return null;
-        }
+//            if(userRoleEnum == UserRoleEnum.ADMIN) {
+                crud.update(requestDto);
+                return new CrudResponseDto(crud);
     }
 
 
@@ -113,7 +92,8 @@ public class CrudService {
             User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
                     ()->new IllegalArgumentException("사용자가 존재하지 않습니다")
             );
-            Crud crud = crudRepository.findByIdAndUserId(id, user.getId()).orElseThrow(
+            Crud crud = crudRepository.findById(id).orElseThrow(
+
                     ()-> new IllegalArgumentException("글이 존재하지 않습니다.")
             );
             crudRepository.delete(crud);
@@ -135,5 +115,27 @@ public class CrudService {
                 () -> new NullPointerException("해당하는 제목의 글이 없습니다.")
         );
         return new CrudResponseDto(crud);
+    }
+
+
+    public User checkJwtToken(HttpServletRequest request) {
+        // Request에서 Token 가져오기
+        String token = jwtUtil.resolveToken(request);
+        Claims claims;
+        // 토큰이 있는 경우에만 게시글 접근 가능
+        if (token != null) {
+            if (jwtUtil.validateToken(token)) {
+                // 토큰에서 사용자 정보 가져오기
+                claims = jwtUtil.getUserInfoFromToken(token);
+            } else {
+                throw new IllegalArgumentException("Token Error");
+            }
+            // 토큰에서 가져온 사용자 정보를 사용하여 DB 조회
+            User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
+                    () -> new IllegalArgumentException("사용자가 존재하지 않습니다.")
+            );
+            return user;
+        }
+        return null;
     }
 }
