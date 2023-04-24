@@ -10,6 +10,7 @@ public class CrudResponseDto {
     private Long id;
     private String title;
     private String username;
+//    private
     private String content;
 
     public CrudResponseDto(Crud crud) {

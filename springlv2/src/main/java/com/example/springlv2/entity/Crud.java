@@ -25,13 +25,13 @@ public class Crud extends Timestamped{
         this.title = requestDto.getTitle();
         this.username = requestDto.getUsername();
         this.content = requestDto.getContent();
-        this.password = requestDto.getPassword();
+//        this.password = requestDto.getPassword();
     }
     public void update(CrudRequestDto requestDto) {
         this.title = requestDto.getTitle();
         this.username = requestDto.getUsername();
         this.content = requestDto.getContent();
-        this.password = requestDto.getPassword();
+//        this.password = requestDto.getPassword();
     }
 
 

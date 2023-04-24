@@ -46,7 +46,7 @@ public class CrudService {
     public List<CrudResponseDto> getCrudList() {
         //테이블에 저장되어있는 모든 글을 조회
         //내림차순
-        return crudRepository.findAllByOrderByModifiedAtDesc().stream().map(CrudResponseDto::new).collect(Collectors.toList());
+        return crudRepository.findAllByOrderByCreatedAtDesc().stream().map(CrudResponseDto::new).collect(Collectors.toList());
 
 
     }
@@ -65,12 +65,17 @@ public class CrudService {
     @Transactional
     public CrudResponseDto updateCrud(Long id, CrudRequestDto requestDto, HttpServletRequest request) {
             User user = checkJwtToken(request);
-            Crud crud = crudRepository.findById(id).orElseThrow(
-                    ()->new IllegalArgumentException("게시글이 존재하지 않습니다.")
+
+//            Crud crud = crudRepository.findById(id).orElseThrow(
+//                    ()->new IllegalArgumentException("게시글이 존재하지 않습니다.")
+//            );
+            Crud crud = crudRepository.findByIdAndUsername(id,user.getUsername()).orElseThrow(
+                ()->new IllegalArgumentException("권한이 없습니다.")
             );
+
 //            if(userRoleEnum == UserRoleEnum.ADMIN) {
-                crud.update(requestDto);
-                return new CrudResponseDto(crud);
+            crud.update(requestDto);
+            return new CrudResponseDto(crud);
     }
 
 
@@ -82,22 +87,26 @@ public class CrudService {
         String token = jwtUtil.resolveToken(request);
         Claims claims;
 
-        if(token != null){
-            if(jwtUtil.validateToken(token)){
+        if(token != null) {
+            if (jwtUtil.validateToken(token)) {
                 claims = jwtUtil.getUserInfoFromToken(token);
-            }else{
+            } else {
                 throw new IllegalArgumentException("Token Error");
             }
 
             User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
-                    ()->new IllegalArgumentException("사용자가 존재하지 않습니다")
+                    () -> new IllegalArgumentException("사용자가 존재하지 않습니다")
             );
-            Crud crud = crudRepository.findById(id).orElseThrow(
-
-                    ()-> new IllegalArgumentException("글이 존재하지 않습니다.")
+//            Crud crud = crudRepository.findById(id).orElseThrow(
+//
+//                    ()-> new IllegalArgumentException("글이 존재하지 않습니다.")
+//            );
+            Crud crud = crudRepository.findByIdAndUsername(id, user.getUsername()).orElseThrow(
+                    () -> new IllegalArgumentException("권한이 없습니다.")
             );
-            crudRepository.delete(crud);
+            crudRepository.deleteById(id);
             return new MsgResponseDto("게시글 삭제 성공", HttpStatus.OK.value());
+//        }
         }else{
             return new MsgResponseDto("게시글 작성자만 삭제 가능, 권한 없음",HttpStatus.OK.value());
         }
@@ -134,6 +143,7 @@ public class CrudService {
             User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
                     () -> new IllegalArgumentException("사용자가 존재하지 않습니다.")
             );
+
             return user;
         }
         return null;
