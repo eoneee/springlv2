@@ -6,27 +6,7 @@ import com.example.springlv2.service.CrudService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-
-
-
-
-//
-//package com.example.springlv2.jwt;
-//
-//import com.example.springlv2.entity.UserRoleEnum;
-//import io.jsonwebtoken.*;
-//import io.jsonwebtoken.security.Keys;
-//import io.jsonwebtoken.security.SecurityException;
-//import lombok.RequiredArgsConstructor;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.stereotype.Component;
-//import org.springframework.util.StringUtils;
-//import org.springframework.web.bind.annotation.RequestMapping;
-//import org.springframework.web.bind.annotation.RestController;
-
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,13 +19,7 @@ import java.util.Date;
 @RequestMapping("/api")
 public class CrudController {
 
-    //private final CrudService crudService = new CrudService();
-    //Autowired로 새로 선언 안할 수 있게 만들어 줌
     private final CrudService crudService;
-//    @Autowired
-//    public CrudController(CrudService crudService) {
-//        this.crudService = crudService;
-//    }
 
     //글 생성하기
     @PostMapping("/post")
@@ -68,10 +42,8 @@ public class CrudController {
 
     //수정하기
     @PutMapping("/post/{id}")
-//    public CrudResponseDto updateCrud(@PathVariable Long id, @RequestBody CrudRequestDto requestDto) {
         public CrudResponseDto updateCrud(@PathVariable Long id, @RequestBody CrudRequestDto requestDto, HttpServletRequest request) {
         return crudService.updateCrud(id,requestDto,request);
-//        return crudService.updateCrud(id,requestDto);
     }
 
 

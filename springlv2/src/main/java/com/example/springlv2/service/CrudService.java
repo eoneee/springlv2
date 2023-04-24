@@ -57,7 +57,6 @@ public class CrudService {
     @Transactional(readOnly = true) //JPA를 사용할 경우, 변경감지 작업을 수행하지 않아서 성능이점 있음
     public List<CrudResponseDto> getCrudList() {
         //테이블에 저장되어있는 모든 글을 조회
-//        return crudRepository.findAll().stream().map(CrudResponseDto::new).collect(Collectors.toList());
         //내림차순
         return crudRepository.findAllByOrderByModifiedAtDesc().stream().map(CrudResponseDto::new).collect(Collectors.toList());
 
@@ -83,22 +82,8 @@ public class CrudService {
     //수정하기
     @Transactional
     public CrudResponseDto updateCrud(Long id, CrudRequestDto requestDto, HttpServletRequest request) {
-        //수정하기 위해 받아온 crud의 id를 사용하여 해당 crud 인스턴스가 존재하는지 확인하고 가져오기
-        //Crud crud = table.get(id);
-        String token = jwtUtil.resolveToken(request);
-        Claims claims;
-
-        if (token != null) {
-            if (jwtUtil.validateToken(token)) {
-                claims = jwtUtil.getUserInfoFromToken(token);
-            } else {
-                throw new IllegalArgumentException("Token Error");
-            }
-
-            User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
-                    () -> new IllegalArgumentException("사용자가 존재하지 않습니다.")
-            );
-            Crud crud = crudRepository.findByIdAndUserId(id, user.getId()).orElseThrow(
+            User user = checkJwtToken(request);
+            Crud crud = crudRepository.findById(id).orElseThrow(
                     ()->new IllegalArgumentException("게시글이 존재하지 않습니다.")
             );
 

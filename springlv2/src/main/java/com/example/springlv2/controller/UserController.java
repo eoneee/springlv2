@@ -21,33 +21,11 @@ import javax.servlet.http.HttpServletResponse;
 public class UserController {
     //임의로 했음
     private final UserService userService;
-//    public UserController(UserService userService) {
-//        this.userService = userService;
-//    }
-//
-//    @GetMapping("/signup")
-//    public ModelAndView signupPage() {
-//        return new ModelAndView("signup");
-//    }
-//
-//    @GetMapping("/login")
-//    public ModelAndView loginPage() {
-//        return new ModelAndView("login");
-//    }
-
     @PostMapping("/signup")
-//    @Valid
-//    public void signup(@RequestBody SignupRequestDto signupRequestDto ) {
     public ResponseEntity<MsgResponseDto> signup(@RequestBody SignupRequestDto signupRequestDto ) {
         userService.signup(signupRequestDto);
         return ResponseEntity.ok(new MsgResponseDto("회원가입 완료", HttpStatus.OK.value()));
     }
-
-//    @PostMapping("/login")
-//    public String login(LoginRequestDto loginRequestDto) {
-//        userService.login(loginRequestDto);
-//        return "redirect:/api/shop";
-//    }
 
     @ResponseBody
     @PostMapping("/login")
