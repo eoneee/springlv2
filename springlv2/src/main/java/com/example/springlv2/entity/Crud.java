@@ -19,8 +19,6 @@ public class Crud extends Timestamped{
     @Column(nullable = false)
     private String title;
     @Column(nullable = false)
-    private String username;
-    @Column(nullable = false)
     private String content;
     @ManyToOne
     @JoinColumn(name = "userId",nullable = false)
