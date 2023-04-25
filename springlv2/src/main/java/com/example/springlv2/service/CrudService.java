@@ -35,8 +35,9 @@ public class CrudService {
             User user = checkJwtToken(request);
             //요청받은 dto로 db에 저장할 객체 Crud crud 만들기
             Crud crud = new Crud(requestDto);
-            crud.setUsername(user.getUsername());
-            crudRepository.saveAndFlush(crud);
+
+            crud.addUser(user);
+            crudRepository.save(crud);
             //브라우저에서 받아온 데이터를 저장하기 위해서 crud객체로 변환
             return new CrudResponseDto(crud);
     }
@@ -65,15 +66,10 @@ public class CrudService {
     @Transactional
     public CrudResponseDto updateCrud(Long id, CrudRequestDto requestDto, HttpServletRequest request) {
             User user = checkJwtToken(request);
-
-//            Crud crud = crudRepository.findById(id).orElseThrow(
-//                    ()->new IllegalArgumentException("게시글이 존재하지 않습니다.")
-//            );
-            Crud crud = crudRepository.findByIdAndUsername(id,user.getUsername()).orElseThrow(
-                ()->new IllegalArgumentException("권한이 없습니다.")
-            );
-
-//            if(userRoleEnum == UserRoleEnum.ADMIN) {
+            //게시글 체크
+            Crud crud = checkCrud(id);
+            //권한 체크
+            isCrudUser(user,crud);
             crud.update(requestDto);
             return new CrudResponseDto(crud);
     }
@@ -84,39 +80,29 @@ public class CrudService {
     //삭제
     @Transactional
     public MsgResponseDto deleteCrud(Long id, HttpServletRequest request){
-        String token = jwtUtil.resolveToken(request);
-        Claims claims;
-
-        if(token != null) {
-            if (jwtUtil.validateToken(token)) {
-                claims = jwtUtil.getUserInfoFromToken(token);
-            } else {
-                throw new IllegalArgumentException("Token Error");
-            }
-
-            User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
-                    () -> new IllegalArgumentException("사용자가 존재하지 않습니다")
-            );
-//            Crud crud = crudRepository.findById(id).orElseThrow(
-//
-//                    ()-> new IllegalArgumentException("글이 존재하지 않습니다.")
-//            );
-            Crud crud = crudRepository.findByIdAndUsername(id, user.getUsername()).orElseThrow(
-                    () -> new IllegalArgumentException("권한이 없습니다.")
-            );
-            crudRepository.deleteById(id);
-            return new MsgResponseDto("게시글 삭제 성공", HttpStatus.OK.value());
-//        }
-        }else{
-            return new MsgResponseDto("게시글 작성자만 삭제 가능, 권한 없음",HttpStatus.OK.value());
-        }
+        User user = checkJwtToken(request);
+        //게시글 체크
+        Crud crud = checkCrud(id);
+        //권한 체크
+        isCrudUser(user, crud);
+        crudRepository.deleteById(id);
+            return new MsgResponseDto("게시글 삭제 성공",HttpStatus.OK.value());
     }
 
+    //게시글 존재 여부 확인
     private Crud checkCrud(Long id) {
         Crud crud = crudRepository.findById(id).orElseThrow(
                 ()->new NullPointerException("글이 존재하지 않습니다.")
         );
         return crud;
+    }
+
+
+    //권한 여부
+    public void isCrudUser(User user,Crud crud){
+        if(!crud.getUser().getUsername().equals(user.getUsername()) && !user.getUsername().equals(UserRoleEnum.ADMIN)){
+            throw new IllegalArgumentException("권한 없음");
+        }
     }
 
     public CrudResponseDto getCrudByTitle(String title) {
@@ -131,21 +117,16 @@ public class CrudService {
         // Request에서 Token 가져오기
         String token = jwtUtil.resolveToken(request);
         Claims claims;
-        // 토큰이 있는 경우에만 게시글 접근 가능
-        if (token != null) {
-            if (jwtUtil.validateToken(token)) {
-                // 토큰에서 사용자 정보 가져오기
-                claims = jwtUtil.getUserInfoFromToken(token);
-            } else {
-                throw new IllegalArgumentException("Token Error");
-            }
-            // 토큰에서 가져온 사용자 정보를 사용하여 DB 조회
-            User user = userRepository.findByUsername(claims.getSubject()).orElseThrow(
-                    () -> new IllegalArgumentException("사용자가 존재하지 않습니다.")
-            );
-
-            return user;
+        // 토큰 검증
+        if(jwtUtil.validateToken(token)){
+            //토큰에서 정보 가져오기
+            claims = jwtUtil.getUserInfoFromToken(token);
+        } else {
+            throw new IllegalArgumentException("로그인 후 이용해 주세요");
         }
-        return null;
+        // 토큰에서 가져온 사용자 정보를 사용하여 DB 조회
+        return userRepository.findByUsername(claims.getSubject()).orElseThrow(
+                ()   -> new IllegalArgumentException("사용자가 존재하지 않습니다.")
+        );
     }
 }

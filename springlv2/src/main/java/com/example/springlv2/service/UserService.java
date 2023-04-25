@@ -37,6 +37,16 @@ public class UserService {
         if (found.isPresent()) {
             throw new IllegalArgumentException("아이디가 이미 존재합니다.");
         }
+
+        //사용자 Role 확인
+        UserRoleEnum role = UserRoleEnum.USER;
+        if(signupRequestDto.isAdmin()){
+            if(!signupRequestDto.getAdminToken().equals(ADMIN_TOKEN)){
+                throw new IllegalArgumentException("관리자 권한이 일치하지 않습니다.");
+            }
+            role = UserRoleEnum.ADMIN;
+        }
+
         //아이디 정규식 확인
         if (!Pattern.matches("^[a-z0-9]{4,10}$", username)) {
 //            return ResponseEntity.ok(new MsgResponseDto("아이디는 4자 이상, 10자 이하 알파벳 소문자, 숫자로만 이루어져야 합니다.",505));
@@ -49,7 +59,7 @@ public class UserService {
 
             throw new IllegalArgumentException("비밀번호는 8자 이상, 15자 이하 알파벳 대/소문자, 숫자로만 이루어져야 합니다.");
         }
-        User user = new User(username, password);
+        User user = new User(username, password, role);
         userRepository.save(user);
     }
 

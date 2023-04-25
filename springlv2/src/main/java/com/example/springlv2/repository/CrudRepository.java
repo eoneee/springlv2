@@ -14,6 +14,6 @@ public interface CrudRepository extends JpaRepository<Crud, Long> {
 
     Optional<Crud> findByIdAndUsername(Long id, String username);
     //내림차순 정렬
-//    Collection<Crud> findAllByOrderByModifiedAtDesc();
+    Collection<Crud> findAllByOrderByModifiedAtDesc();
     Collection<Crud> findAllByOrderByCreatedAtDesc();
 }
